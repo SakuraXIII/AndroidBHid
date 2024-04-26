@@ -1,6 +1,8 @@
 package com.sy.bhid
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -9,7 +11,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 
 
 class MainActivity : ComponentActivity() {
@@ -17,6 +22,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContent {
+            MaterialTheme {
+                Surface() {
+                    Main(name = bhid.hostname, mac = bhid.hostMac) {
+                        this.sendKey(arrayOf("ESC", "2", "0", "2", "2", "0", "9", "1", "0"))
+                    }
+                }
+            }
+        }
         Utils.checkAndRequestPermissions(
             this, arrayOf(
                 Manifest.permission.BLUETOOTH_SCAN,
@@ -25,13 +39,7 @@ class MainActivity : ComponentActivity() {
             )
         )
         Utils.showLog(isSupportBluetoothHid().toString())
-//        startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE))
         bhid = BluetoothKeyboard(this)
-        setContent {
-            Button(onClick = { this.sendKey(arrayOf("ESC", "2", "0", "2", "2", "0", "9", "1", "0")) }) {
-                Text(text = "Test")
-            }
-        }
     }
 
 
@@ -65,4 +73,13 @@ class MainActivity : ComponentActivity() {
         return comp != null
     }
 
+}
+
+@Composable
+fun Main(name: String, mac: String, click: () -> Unit) {
+    Text(text = name)
+    Text(text = mac)
+    Button(onClick = click) {
+        Text(text = "Send")
+    }
 }

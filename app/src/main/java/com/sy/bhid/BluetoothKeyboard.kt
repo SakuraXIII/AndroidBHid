@@ -1,16 +1,25 @@
 package com.sy.bhid
 
+import android.bluetooth.BluetoothDevice
 import android.content.Context
 import java.util.Locale
 
 class BluetoothKeyboard(context: Context) {
     private val bluetoothClient: BluetoothClient? = BluetoothClient.bindContext(context)
+    var hostname: String = ""
+    var hostMac: String = ""
 
     init {
         bluetoothClient?.setListener(object : BluetoothClient.Listener {
-            override fun onConnected() {}
+            override fun onConnected(name: String, mac: String) {
+                hostname = name
+                hostMac = mac
+            }
+
             override fun onDisConnected() {
-//                active()
+                hostname = ""
+                hostMac = ""
+                active()
             }
         })
     }

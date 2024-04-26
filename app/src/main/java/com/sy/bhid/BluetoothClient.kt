@@ -10,6 +10,7 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import java.util.concurrent.Executors
 
 
@@ -20,9 +21,7 @@ class BluetoothClient private constructor(private val context: Context) :
     private val bluetoothDevice: BluetoothDevice? = null
     private var hostDevice: BluetoothDevice? = null
     private var mpluggedDevice: BluetoothDevice? = null
-    private val btAdapter =
-        (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
-
+    private val btAdapter = (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
     private val serviceListener: ServiceListener = ServiceListener()
     private var listener: Listener? = null
     private val sdpRecord = BluetoothHidDeviceAppSdpSettings(
@@ -42,7 +41,7 @@ class BluetoothClient private constructor(private val context: Context) :
     )
 
     interface Listener {
-        fun onConnected()
+        fun onConnected(name: String, mac: String)
         fun onDisConnected()
     }
 
@@ -55,7 +54,6 @@ class BluetoothClient private constructor(private val context: Context) :
         if (btHid != null) {
             return
         }
-//        btAdapter.setName("Keyboard BT")
         btAdapter.getProfileProxy(context, serviceListener, BluetoothProfile.HID_DEVICE)
     }
 
@@ -83,13 +81,13 @@ class BluetoothClient private constructor(private val context: Context) :
 
     @SuppressLint("MissingPermission")
     fun sendData(id: Int, data: ByteArray?) {
-        btHid?.sendReport(hostDevice, id,data)
+        btHid?.sendReport(hostDevice, id, data)
     }
 
     @SuppressLint("MissingPermission")
     fun active() {
         val status = btHid?.registerApp(
-            sdpRecord, null, null,
+            sdpRecord, null, qosOut,
             Executors.newCachedThreadPool(), this@BluetoothClient
         )
         Utils.showLog(status.toString())
@@ -127,14 +125,16 @@ class BluetoothClient private constructor(private val context: Context) :
     @SuppressLint("MissingPermission")
     override fun onConnectionStateChanged(device: BluetoothDevice, state: Int) {
         super.onConnectionStateChanged(device, state)
-        Utils.showLog("onConnectionStateChanged:" + device + "  state:" + state, level = Log.ERROR)
-        if (state == BluetoothProfile.STATE_CONNECTED) {
-            hostDevice = device
-            listener?.onConnected()
+        Utils.showLog("onConnectionStateChanged:" + device + "  state:" + state, level = Log.WARN)
+        when (state) {
+            BluetoothProfile.STATE_CONNECTED -> {
+                hostDevice = device
+                listener?.onConnected(device.name, device.address)
+                Utils.showLog("if connected")
+            }
 
-        } else {
-            hostDevice = null
-            if (state == BluetoothProfile.STATE_DISCONNECTED) {
+            else -> {
+                hostDevice = null
                 listener?.onDisConnected()
             }
         }
@@ -148,9 +148,9 @@ class BluetoothClient private constructor(private val context: Context) :
         }
         if (registered) {
             val states = intArrayOf(
+                BluetoothProfile.STATE_DISCONNECTED,
                 BluetoothProfile.STATE_CONNECTING,
                 BluetoothProfile.STATE_CONNECTED,
-                BluetoothProfile.STATE_DISCONNECTED,
                 BluetoothProfile.STATE_DISCONNECTING
             )
             val pairedDevices = btHid?.getDevicesMatchingConnectionStates(states)
@@ -168,7 +168,6 @@ class BluetoothClient private constructor(private val context: Context) :
                     }
                 }
             }
-
         }
     }
 }

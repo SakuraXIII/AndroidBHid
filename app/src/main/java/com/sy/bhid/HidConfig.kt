@@ -1,7 +1,7 @@
 object HidConfig {
-    const val NAME = "Evin Keyboard"
-    const val DESCRIPTION = "Evin for you"
-    const val PROVIDER = "Evin"
+    const val NAME = "SakuHx HID"
+    const val DESCRIPTION = "SakuHx Keyboard"
+    const val PROVIDER = "SakuHx"
     val KEYBOARD_COMBO = byteArrayOf(
         0x05.toByte(), 0x01.toByte(), //USAGE_PAGE (Generic Desktop)
         0x09.toByte(), 0x06.toByte(), //USAGE (Keyboard)
