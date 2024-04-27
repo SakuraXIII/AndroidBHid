@@ -1,6 +1,5 @@
-package com.sy.bhid
+package com.sy.bhid.bk
 
-import android.bluetooth.BluetoothDevice
 import android.content.Context
 import java.util.Locale
 
