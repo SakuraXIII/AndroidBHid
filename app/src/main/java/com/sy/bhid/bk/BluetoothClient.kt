@@ -158,16 +158,18 @@ class BluetoothClient private constructor(private val context: Context) :
 			Utils.showLog("paired devices: $pairedDevices")
 			mpluggedDevice = pluggedDevice
 			btHid?.apply {
-				if (this.getConnectionState(pluggedDevice) == BluetoothProfile.STATE_DISCONNECTED)
-					this.connect(pluggedDevice)
-				else {
-					val pairedDevice = pairedDevices?.get(0)
-					val pairedDState = this.getConnectionState(pairedDevice)
-					Utils.showLog("paired $pairedDState")
-					if (pairedDState == BluetoothProfile.STATE_DISCONNECTED) {
-						this.connect(pairedDevice)
-					}
-				}
+				val remoteDevice = btAdapter.getRemoteDevice("38:7A:0E:A4:05:78")
+				this.connect(remoteDevice)
+//				if (this.getConnectionState(pluggedDevice) == BluetoothProfile.STATE_DISCONNECTED)
+//					this.connect(pluggedDevice)
+//				else {
+//					val pairedDevice = pairedDevices?.get(0)
+//					val pairedDState = this.getConnectionState(pairedDevice)
+//					Utils.showLog("paired $pairedDState")
+//					if (pairedDState == BluetoothProfile.STATE_DISCONNECTED) {
+//						this.connect(pairedDevice)
+//					}
+//				}
 			}
 		}
 	}

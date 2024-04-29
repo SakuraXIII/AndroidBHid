@@ -18,13 +18,14 @@ import androidx.compose.runtime.Composable
 import com.sy.bhid.bk.BluetoothKeyboard
 import com.sy.bhid.ui.theme.BHidkeyboardTheme
 import com.sy.bhid.utils.AppUtils
+import com.sy.bhid.utils.BHidUtils
 import com.sy.bhid.utils.ScreenUtils
 import com.sy.bhid.utils.ToastUtils
 import com.sy.bhid.utils.Utils
 
 
 class MainActivity : ComponentActivity() {
-	private lateinit var bhid: BluetoothKeyboard
+	private var bhid: BluetoothKeyboard? = null
 
 	@RequiresApi(Build.VERSION_CODES.S)
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,16 +34,21 @@ class MainActivity : ComponentActivity() {
 		ScreenUtils.setFullScreen(this)
 		setContent {
 			BHidkeyboardTheme {
-				Surface() {
-					Main(name = bhid.hostname, mac = bhid.hostMac) {
+				Surface {
+					Main(name = bhid?.hostname ?: "", mac = bhid?.hostMac ?: "") {
 						this.sendKey(arrayOf("ESC", "2", "0", "2", "2", "0", "9", "1", "0"))
 					}
+
 				}
 			}
 		}
 		registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
 			if (it.all { permission -> permission.value }) {
-				bhid = BluetoothKeyboard(this)
+//				BHidUtils.RegistApp(object : BHidUtils.HidServiceEventListener {
+//					override fun HidServiceConnected() {
+//						BHidUtils.connect(BHidUtils.SelectedDeviceMac)
+//					}
+//				})
 			} else {
 				ToastUtils.showLongSafe("请授予所有权限")
 			}
@@ -54,18 +60,20 @@ class MainActivity : ComponentActivity() {
 			)
 		)
 		Utils.showLog(isSupportBluetoothHid().toString())
+		bhid = BluetoothKeyboard(this)
+
 	}
 
 
 	private fun sendKey(msg: Array<String>) {
 		msg.forEach {
 			if (it.isNotEmpty()) {
-				this.bhid.sendKey(it)
+				this.bhid?.sendKey(it)
 			}
 		}
 	}
 
-	fun isSupportBluetoothHid(): Boolean {
+	private fun isSupportBluetoothHid(): Boolean {
 		val intent = Intent("android.bluetooth.IBluetoothHidDevice")
 		val results: List<ResolveInfo> = this.packageManager.queryIntentServices(intent, 0) ?: return false
 		var comp: ComponentName? = null

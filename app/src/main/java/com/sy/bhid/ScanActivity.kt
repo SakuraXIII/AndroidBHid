@@ -27,43 +27,43 @@ import java.util.Arrays
 import java.util.Collections
 
 
-class ScanActivity : ComponentActivity() {
+//class ScanActivity : ComponentActivity() {
+//
+//	private val mBluetoothAdapter: BluetoothAdapter? = null
+//	private val mBluetoothDevice: BluetoothDevice? = null
+//
+//	private val mRecyclerview: RecyclerView? = null
+//	private val mBleDeviceAdpter: BleDeviceAdpter? = null
+//	private val datas: List<MBluetoothDevice>? = null
+//	private val mLoadingDialog: LoadingDialog? = null
+//	override fun onCreate(savedInstanceState: Bundle?) {
+//		super.onCreate(savedInstanceState)
+//		setContent {
+//			BHidkeyboardTheme {
+//				// A surface container using the 'background' color from the theme
+//				Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+//					Greeting("Android")
+//				}
+//			}
+//		}
+//	}
+//}
 
-	private val mBluetoothAdapter: BluetoothAdapter? = null
-	private val mBluetoothDevice: BluetoothDevice? = null
-
-	private val mRecyclerview: RecyclerView? = null
-	private val mBleDeviceAdpter: BleDeviceAdpter? = null
-	private val datas: List<MBluetoothDevice>? = null
-	private val mLoadingDialog: LoadingDialog? = null
-	override fun onCreate(savedInstanceState: Bundle?) {
-		super.onCreate(savedInstanceState)
-		setContent {
-			BHidkeyboardTheme {
-				// A surface container using the 'background' color from the theme
-				Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-					Greeting("Android")
-				}
-			}
-		}
-	}
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-	Text(
-		text = "Hello $name!",
-		modifier = modifier
-	)
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-	BHidkeyboardTheme {
-		Greeting("Android")
-	}
-}
+//@Composable
+//fun Greeting(name: String, modifier: Modifier = Modifier) {
+//	Text(
+//		text = "Hello $name!",
+//		modifier = modifier
+//	)
+//}
+//
+//@Preview(showBackground = true)
+//@Composable
+//fun GreetingPreview() {
+//	BHidkeyboardTheme {
+//		Greeting("Android")
+//	}
+//}
 
 
 //class ScanActivity() : XActivity() {
