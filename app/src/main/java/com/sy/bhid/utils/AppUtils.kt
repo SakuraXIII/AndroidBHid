@@ -10,10 +10,6 @@ import android.os.Build
 object AppUtils {
 	private var context: Context? = null
 
-	init {
-		throw UnsupportedOperationException("u can't instantiate me...")
-	}
-
 
 	fun init(context: Context) {
 		AppUtils.context = context
@@ -21,7 +17,7 @@ object AppUtils {
 
 	fun getContext(): Context {
 		if (context != null) return context!!
-		throw NullPointerException("u should init first")
+		throw NullPointerException("u should call init() to init context first")
 	}
 
 

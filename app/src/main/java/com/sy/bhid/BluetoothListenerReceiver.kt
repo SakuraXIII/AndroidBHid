@@ -7,7 +7,7 @@ import android.content.Intent
 import android.util.Log
 
 
-abstract class BluetoothListenerReceiver : BroadcastReceiver() {
+class BluetoothListenerReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             BluetoothAdapter.ACTION_STATE_CHANGED -> {

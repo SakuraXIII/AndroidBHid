@@ -7,10 +7,7 @@ import android.util.DisplayMetrics
 import android.view.WindowManager
 
 
-class ScreenUtils {
-	private fun ScreenUtils() {
-		throw UnsupportedOperationException("u can't instantiate me...")
-	}
+object ScreenUtils {
 
 	/**
 	 * 获取屏幕的宽度（单位：px）

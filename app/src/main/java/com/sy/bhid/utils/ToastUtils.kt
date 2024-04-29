@@ -78,46 +78,6 @@ object ToastUtils {
 		sHandler.post { show(format, Toast.LENGTH_LONG, args) }
 	}
 
-	/**
-	 * 显示短时吐司
-	 *
-	 * @param text 文本
-	 */
-	fun showShort(text: CharSequence) {
-		show(text, Toast.LENGTH_SHORT)
-	}
-
-
-	/**
-	 * 显示短时吐司
-	 *
-	 * @param format 格式
-	 * @param args   参数
-	 */
-	fun showShort(format: String, vararg args: Any?) {
-		show(format, Toast.LENGTH_SHORT, args)
-	}
-
-	/**
-	 * 显示长时吐司
-	 *
-	 * @param text 文本
-	 */
-	fun showLong(text: CharSequence) {
-		show(text, Toast.LENGTH_LONG)
-	}
-
-
-	/**
-	 * 显示长时吐司
-	 *
-	 * @param format 格式
-	 * @param args   参数
-	 */
-	fun showLong(format: String, vararg args: Any?) {
-		show(format, Toast.LENGTH_LONG, args)
-	}
-
 
 	/**
 	 * 显示吐司
