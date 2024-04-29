@@ -3,7 +3,6 @@ package com.sy.bhid.utils
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
