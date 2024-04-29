@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">BHidKeyboard</string>
+    <string name="app_name">蓝牙HID</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="title_activity_scan">ScanActivity</string>
 </resources>
