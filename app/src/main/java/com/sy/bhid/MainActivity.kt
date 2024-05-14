@@ -25,29 +25,24 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.sy.bhid.bk.BluetoothKeyboard
 import com.sy.bhid.ui.theme.BHidkeyboardTheme
 import com.sy.bhid.utils.AppUtils
-import com.sy.bhid.utils.BHidUtils
+import com.sy.bhid.utils.BDeviceUtils
+import com.sy.bhid.utils.HidUtils
 import com.sy.bhid.utils.ScreenUtils
 import com.sy.bhid.utils.ToastUtils
 import com.sy.bhid.utils.Utils
-import com.sy.bhid.utils.fillMaxSize
 
 
 class MainActivity : ComponentActivity() {
     private var pairedDevices by mutableStateOf<List<BluetoothDevice>>(listOf())
     private var connectedDevice by mutableStateOf<BluetoothDevice?>(null)
 
-    @RequiresApi(Build.VERSION_CODES.S)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppUtils.init(this)
@@ -56,25 +51,30 @@ class MainActivity : ComponentActivity() {
             BHidkeyboardTheme {
                 Surface(Modifier.fillMaxSize(1f)) {
                     Main(pairedDevices) {
-                        val isConnected = BHidUtils.connect(it.address)
-                        ToastUtils.showShortSafe(if (isConnected) "连接成功" else "连接失败")
-//                        this.sendKey(arrayOf("ESC", "2", "0", "2", "2", "0", "9", "1", "0"))
+                        if (it == BDeviceUtils.BtDevice) {
+                            this.sendKey(arrayOf("ESC", "2", "0", "2", "2", "0", "9", "1", "0"))
+                        } else {
+                            val isConnected = BDeviceUtils.connect(it.address)
+                            if (isConnected) {
+                                ToastUtils.showShortSafe("连接成功")
+                                connectedDevice = it
+                            } else ToastUtils.showShortSafe("连接失败")
+
+                        }
                     }
                 }
             }
         }
-        init()
         Utils.showLog(isSupportBluetoothHid().toString())
-
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
     private fun init() {
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             if (it.all { permission -> permission.value }) {
-                BHidUtils.RegistApp(object : BHidUtils.HidServiceEventListener {
+                BDeviceUtils.RegistApp(object : BDeviceUtils.HidServiceEventListener {
                     override fun HidServiceConnected() {
-                        pairedDevices = (BHidUtils.getPairedDevices()?.toList() ?: listOf())
+                        pairedDevices = (BDeviceUtils.getPairedDevices()?.toList() ?: listOf())
 //                        BHidUtils.connect(BHidUtils.SelectedDeviceMac)
                     }
                 })
@@ -90,12 +90,35 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
+    @SuppressLint("MissingPermission")
+    override fun onStart() {
+        super.onStart()
+        // 程序进入后台时，HID 会自动取消注册，所以无论是初始化还是从后台进入前台，都要重新注册
+        init()
+        // 用于程序从后台进入前台时的触发
+        BDeviceUtils.reConnect(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // 同步连接设备对象
+        connectedDevice = BDeviceUtils.BtDevice
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // 关闭 handler，线程执行器，取消注册HID
+        HidUtils.exit()
+    }
+
     private fun sendKey(msg: Array<String>) {
-        msg.forEach {
-            if (it.isNotEmpty()) {
-//                this.bhid?.sendKey(it)
-            }
-        }
+        HidUtils.SendKeyReport(byteArrayOf(2))
+//        msg.forEach {
+//            if (it.isNotEmpty()) {
+////                this.bhid?.sendKey(it)
+//            }
+//        }
     }
 
     private fun isSupportBluetoothHid(): Boolean {

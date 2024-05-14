@@ -32,8 +32,9 @@ class BluetoothKeyboard(context: Context) {
             }
         }
         if (SHITBYTE.containsKey(key)) {
-            b1 = 2
+            b1 = 2 // 表示本次按键带有修饰键（组合键 ）（Ctrl, Shift 等）
         }
+        // 报文组成：[8]: [modifier_key, 0, data, 0, 0, 0, 0, 0]
         bluetoothClient?.sendData(
             8, byteArrayOf(
                 b1, 0,

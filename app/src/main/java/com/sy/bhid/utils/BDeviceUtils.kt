@@ -16,7 +16,7 @@ import java.util.concurrent.Executors
  * 蓝牙配对，连接等状态管理
  */
 @SuppressLint("MissingPermission")
-object BHidUtils {
+object BDeviceUtils {
     var SelectedDeviceMac = ""
     var _connected = false
     var IsRegisted = false
@@ -34,7 +34,7 @@ object BHidUtils {
             // mProfileServiceListener 中 register
             if (!IsRegisted)
                 mBluetoothAdapter.getProfileProxy(AppUtils.getContext(), mProfileServiceListener, BluetoothProfile.HID_DEVICE)
-            BHidUtils.listener = listener
+            BDeviceUtils.listener = listener
 
         } catch (e: Exception) {
             e.printStackTrace()
@@ -84,9 +84,12 @@ object BHidUtils {
     }
 
     private fun IsConnected(_connected: Boolean) {
-        BHidUtils._connected = _connected
+        BDeviceUtils._connected = _connected
     }
 
+    /**
+     * 连接指定 MAC 设备，如果已有连接的设备，则断开当前连接
+     */
     fun connect(deviceAddress: String?): Boolean {
         if (TextUtils.isEmpty(deviceAddress)) {
             ToastUtils.showShortSafe("获取mac地址失败")
@@ -99,12 +102,14 @@ object BHidUtils {
             HidDevice!!.disconnect(BtDevice)
         }
         val ret = HidDevice!!.connect(BtDevice)
-        HidConfig.BtDevice = BtDevice
-        HidConfig.HidDevice = HidDevice
+        HidUtils.BtDevice = BtDevice
+        HidUtils.HidDevice = HidDevice
         return ret
     }
 
-
+    /**
+     * 重新连接选中过的设备，如果没有连接过的设备，则直接返回。适合用于从后台返回前台的重新连接
+     */
     fun reConnect(context: Activity) {
         if (TextUtils.isEmpty(SelectedDeviceMac)) return
         try {
@@ -118,8 +123,12 @@ object BHidUtils {
                         return
                     } else {
                         if (Pair(SelectedDeviceMac)) {
-//							RegistApp()
-                            Utils.DelayTask({ context.runOnUiThread { connect(SelectedDeviceMac) } }, 500, true)
+                            Utils.DelayTask({
+                                context.runOnUiThread {
+                                    val result = connect(SelectedDeviceMac)
+                                    Utils.showLog(result.toString())
+                                }
+                            }, 500, true)
                         }
                     }
                 }
@@ -135,13 +144,13 @@ object BHidUtils {
             bluetoothProfile = proxy
             if (profile == BluetoothProfile.HID_DEVICE) {
                 HidDevice = proxy as BluetoothHidDevice
-                HidConfig.HidDevice = HidDevice
+                HidUtils.HidDevice = HidDevice
                 val sdp = BluetoothHidDeviceAppSdpSettings(
-                    HidConfig.NAME,
-                    HidConfig.DESCRIPTION,
-                    HidConfig.PROVIDER,
+                    HidUtils.NAME,
+                    HidUtils.DESCRIPTION,
+                    HidUtils.PROVIDER,
                     BluetoothHidDevice.SUBCLASS1_COMBO,
-                    HidConfig.DESCRIPTOR
+                    HidUtils.DESCRIPTOR
                 )
                 HidDevice!!.registerApp(sdp, null, null, Executors.newCachedThreadPool(), mCallback)
                 listener?.HidServiceConnected()
@@ -150,13 +159,14 @@ object BHidUtils {
     }
 
     val mCallback: BluetoothHidDevice.Callback = object : BluetoothHidDevice.Callback() {
-        override fun onAppStatusChanged(pluggedDevice: BluetoothDevice, registered: Boolean) {
+        override fun onAppStatusChanged(pluggedDevice: BluetoothDevice?, registered: Boolean) {
             IsRegisted = registered
         }
 
         override fun onConnectionStateChanged(device: BluetoothDevice, state: Int) {
             if (state == BluetoothProfile.STATE_DISCONNECTED) {
                 IsConnected(false)
+                BtDevice = null
 //                EventBus.getDefault().post(HidEvent(HidEvent.tcpType.onDisConnected))
             } else if (state == BluetoothProfile.STATE_CONNECTED) {
                 IsConnected(true)

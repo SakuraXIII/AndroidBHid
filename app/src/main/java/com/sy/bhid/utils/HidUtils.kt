@@ -18,14 +18,14 @@ import kotlin.experimental.or
 /**
  * HID配置以及发送报文相关功能
  */
-object HidConfig {
+object HidUtils {
     const val NAME = "SakuHx HID"
     const val DESCRIPTION = "SakuHx Keyboard"
     const val PROVIDER = "SakuHx"
     var HidDevice: BluetoothHidDevice? = null
     var BtDevice: BluetoothDevice? = null
-    var ModifierByte: Byte = 0x00
-    var KeyByte: Byte = 0x00
+    private var ModifierByte: Byte = 0x00
+    private var KeyByte: Byte = 0x00
     val DESCRIPTOR = byteArrayOf(
         0x05.toByte(),
         0x01.toByte(),
@@ -142,7 +142,10 @@ object HidConfig {
     private var handler: Handler? = null
     private var singleThreadExecutor: ExecutorService? = null
 
-    fun reporttrans() {
+    /**
+     * 创建一个 handler，在线程中接收消息，发送报文数据
+     */
+    private fun reporttrans() {
         singleThreadExecutor = Executors.newSingleThreadExecutor()
         singleThreadExecutor!!.execute(Looper.myLooper()?.let {
             Runnable {
@@ -159,13 +162,13 @@ object HidConfig {
         })
     }
 
+    /**
+     * 封装报文格式，预处理
+     */
     @SuppressLint("MissingPermission")
     private fun postReport(report: HidReport) {
-//		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-//			return
-//		}
         report.SendState = HidReport.State.Sending
-        Log.e("postReport", ("ID:" + report.reportId) + "\t\tDATA:" + Utils.toHexStringForLog(report.data))
+        Utils.showLog(("ID:" + report.reportId) + "\t\tDATA:" + Utils.toHexStringForLog(report.data), level = Log.DEBUG)
         val ret = HidDevice!!.sendReport(BtDevice, report.reportId, report.data)
         if (!ret) {
             report.SendState = HidReport.State.Failded
@@ -174,21 +177,22 @@ object HidConfig {
         }
     }
 
+    @SuppressLint("MissingPermission")
     fun exit() {
-        if (handler != null) {
-            handler!!.looper.quit()
-            handler = null
-        }
-        if (singleThreadExecutor != null && !singleThreadExecutor!!.isShutdown) {
-            singleThreadExecutor!!.shutdown()
-            singleThreadExecutor = null
-        }
+        handler?.looper?.quit()
+        handler = null
+        singleThreadExecutor?.shutdown()
+        singleThreadExecutor = null
+        HidDevice?.unregisterApp()
     }
 
     fun CleanKbd() {
         SendKeyReport(byteArrayOf(0, 0))
     }
 
+    /**
+     * 将报文数据处理为 Message，发送到 handler，在线程中处理。
+     */
     fun addInputReport(inputReport: HidReport?) {
         if (handler == null || singleThreadExecutor == null) {
             reporttrans()
@@ -281,14 +285,14 @@ object HidConfig {
     }
 
     fun ModifierDown(UsageId: Byte): Byte {
-        synchronized(HidConfig::class.java) { ModifierByte = (ModifierByte.toInt() or UsageId.toInt()).toByte() }
+        synchronized(HidUtils::class.java) { ModifierByte = (ModifierByte.toInt() or UsageId.toInt()).toByte() }
         return ModifierByte
     }
 
     fun ModifierUp(UsageId: Int): Byte {
         var UsageId = UsageId
         UsageId = UsageId.inv()
-        synchronized(HidConfig::class.java) { ModifierByte = (ModifierByte.toInt() and UsageId).toByte() }
+        synchronized(HidUtils::class.java) { ModifierByte = (ModifierByte.toInt() and UsageId).toByte() }
         return ModifierByte
     }
 
@@ -297,13 +301,13 @@ object HidConfig {
         if (!TextUtils.isEmpty(usageStr)) {
             if (usageStr.startsWith("M")) {
                 usageStr = usageStr.replace("M", "")
-                synchronized(HidConfig::class.java) {
+                synchronized(HidUtils::class.java) {
                     val mod = ModifierDown(usageStr.toInt().toByte())
                     SendKeyReport(byteArrayOf(mod, KeyByte))
                 }
             } else {
                 val key = usageStr.toInt().toByte()
-                synchronized(HidConfig::class.java) {
+                synchronized(HidUtils::class.java) {
                     KeyByte = key
                     SendKeyReport(byteArrayOf(ModifierByte, KeyByte))
                 }
@@ -316,12 +320,12 @@ object HidConfig {
         if (!TextUtils.isEmpty(usageStr)) {
             if (usageStr.startsWith("M")) {
                 usageStr = usageStr.replace("M", "")
-                synchronized(HidConfig::class.java) {
+                synchronized(HidUtils::class.java) {
                     val mod = ModifierUp(usageStr.toInt())
                     SendKeyReport(byteArrayOf(mod, KeyByte))
                 }
             } else {
-                synchronized(HidConfig::class.java) {
+                synchronized(HidUtils::class.java) {
                     KeyByte = 0
                     SendKeyReport(byteArrayOf(ModifierByte, KeyByte))
                 }

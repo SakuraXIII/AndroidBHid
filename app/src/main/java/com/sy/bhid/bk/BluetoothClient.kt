@@ -1,6 +1,6 @@
 package com.sy.bhid.bk
 
-import com.sy.bhid.utils.HidConfig
+import com.sy.bhid.utils.HidUtils
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
@@ -25,11 +25,11 @@ class BluetoothClient private constructor(private val context: Context) :
 	private val serviceListener: ServiceListener = ServiceListener()
 	private var listener: Listener? = null
 	private val sdpRecord = BluetoothHidDeviceAppSdpSettings(
-		HidConfig.NAME,
-		HidConfig.DESCRIPTION,
-		HidConfig.PROVIDER,
+        HidUtils.NAME,
+        HidUtils.DESCRIPTION,
+        HidUtils.PROVIDER,
 		BluetoothHidDevice.SUBCLASS1_COMBO,
-		HidConfig.DESCRIPTOR
+        HidUtils.DESCRIPTOR
 	)
 	private val qosOut = BluetoothHidDeviceAppQosSettings(
 		BluetoothHidDeviceAppQosSettings.SERVICE_BEST_EFFORT,
