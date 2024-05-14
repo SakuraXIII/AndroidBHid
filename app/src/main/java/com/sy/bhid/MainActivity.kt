@@ -113,7 +113,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun sendKey(msg: Array<String>) {
-        HidUtils.SendKeyReport(byteArrayOf(2))
+        HidUtils.keyDown("2")
+        HidUtils.stopKey()
 //        msg.forEach {
 //            if (it.isNotEmpty()) {
 ////                this.bhid?.sendKey(it)
