@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
                 Surface(Modifier.fillMaxSize(1f)) {
                     Main(pairedDevices) {
                         if (it == BDeviceUtils.BtDevice) {
-                            this.sendKey(arrayOf("ESC", "2", "0", "2", "2", "0", "9", "1", "0"))
+                            this.sendKey(arrayOf("ESC", "2", "0", "2", "3", "1", "0", "1", "5"))
                         } else {
                             val isConnected = BDeviceUtils.connect(it.address)
                             if (isConnected) {
@@ -113,13 +113,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun sendKey(msg: Array<String>) {
-        HidUtils.keyDown("2")
-        HidUtils.stopKey()
-//        msg.forEach {
-//            if (it.isNotEmpty()) {
-////                this.bhid?.sendKey(it)
-//            }
-//        }
+        msg.forEach {
+            HidUtils.keyDown(it)
+            HidUtils.stopKey()
+        }
     }
 
     private fun isSupportBluetoothHid(): Boolean {

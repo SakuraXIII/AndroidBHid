@@ -1,6 +1,6 @@
 package com.sy.bhid.data
 
-data class HidReport(val deviceType: DeviceType?, val reportId: Int, val data: ByteArray) {
+data class HidReport(val deviceType: DeviceType?, val reportId: Int, val data: ByteArray, val key: String = "") {
 
     var SendState = State.None
 
@@ -17,4 +17,6 @@ data class HidReport(val deviceType: DeviceType?, val reportId: Int, val data: B
         Sended,
         Failded
     }
+
+
 }

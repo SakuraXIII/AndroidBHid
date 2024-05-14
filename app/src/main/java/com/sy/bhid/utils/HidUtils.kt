@@ -171,7 +171,10 @@ object HidUtils {
     @SuppressLint("MissingPermission")
     private fun postReport(report: HidReport) {
         report.SendState = HidReport.State.Sending
-        Utils.showLog(("ID:" + report.reportId) + "\t\tDATA:" + Utils.toHexStringForLog(report.data), level = Log.DEBUG)
+        Utils.showLog(
+            "ID:${report.reportId}, KEY:${report.key}, DEC:${report.data.contentToString()}, HEX:${Utils.toHexStringForLog(report.data)}",
+            level = Log.DEBUG
+        )
         val ret = HidDevice!!.sendReport(BtDevice, report.reportId, report.data)
         if (!ret) {
             report.SendState = HidReport.State.Failded
@@ -308,19 +311,20 @@ object HidUtils {
             synchronized(HidUtils::class.java) {
                 // 表示按住修饰键
                 val mod = ModifierDown(usageStr.toInt().toByte())
-                SendKeyReport(byteArrayOf(mod, KeyByte))
+                SendKeyReport(byteArrayOf(mod, KeyByte), key)
             }
         } else {
             val code = usageStr.toInt().toByte()
             synchronized(HidUtils::class.java) {
                 KeyByte = code
-                SendKeyReport(byteArrayOf(ModifierByte, KeyByte))
+                SendKeyReport(byteArrayOf(ModifierByte, KeyByte), key)
             }
         }
     }
 
     /**
-     * 松开指定键，直接发送报文 0 即可代表停止发送报文，即调用 [stopKey]
+     * 松开指定键，直接发送报文 0 即可代表停止发送报文，即等效于调用 [stopKey]
+     *
      * 但是这里需要检测松开的是否为修饰键，以实现组合键功能
      */
     fun keyUp(usageStr: String) {
@@ -348,8 +352,14 @@ object HidUtils {
         SendKeyReport(byteArrayOf(0, 0))
     }
 
-    fun SendKeyReport(reportData: ByteArray) {
-        val report = HidReport(HidReport.DeviceType.Keyboard, 0x02, reportData)
+    /**
+     * 封装报文
+     *
+     * @param reportData 报文数据部分
+     * @param key 相应字符键
+     */
+    private fun SendKeyReport(reportData: ByteArray, key: String = "") {
+        val report = HidReport(HidReport.DeviceType.Keyboard, 0x02, reportData, key)
         addInputReport(report)
     }
 }
