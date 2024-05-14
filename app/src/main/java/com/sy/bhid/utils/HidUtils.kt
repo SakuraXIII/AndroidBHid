@@ -8,7 +8,10 @@ import android.os.Looper
 import android.os.Message
 import android.text.TextUtils
 import android.util.Log
+import com.sy.bhid.bk.BluetoothKeyboard
 import com.sy.bhid.data.HidReport
+import com.sy.bhid.data.KeyMap
+import java.util.Locale
 import java.util.TimerTask
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -186,9 +189,6 @@ object HidUtils {
         HidDevice?.unregisterApp()
     }
 
-    fun CleanKbd() {
-        SendKeyReport(byteArrayOf(0, 0))
-    }
 
     /**
      * 将报文数据处理为 Message，发送到 handler，在线程中处理。
@@ -296,26 +296,34 @@ object HidUtils {
         return ModifierByte
     }
 
-    fun KbdKeyDown(usageStr: String) {
-        var usageStr = usageStr
-        if (!TextUtils.isEmpty(usageStr)) {
-            if (usageStr.startsWith("M")) {
-                usageStr = usageStr.replace("M", "")
-                synchronized(HidUtils::class.java) {
-                    val mod = ModifierDown(usageStr.toInt().toByte())
-                    SendKeyReport(byteArrayOf(mod, KeyByte))
-                }
-            } else {
-                val key = usageStr.toInt().toByte()
-                synchronized(HidUtils::class.java) {
-                    KeyByte = key
-                    SendKeyReport(byteArrayOf(ModifierByte, KeyByte))
-                }
+    /**
+     * 按下指定按键
+     */
+    fun keyDown(key: String) {
+        // 字符类型 HID 键码
+        var usageStr = KeyMap.getKeys(key.lowercase(Locale.getDefault()))
+        if (usageStr.startsWith("M")) {
+            // M 表示 modifier 修饰键：Ctrl, Shift, Alt
+            usageStr = usageStr.replace("M", "")
+            synchronized(HidUtils::class.java) {
+                // 表示按住修饰键
+                val mod = ModifierDown(usageStr.toInt().toByte())
+                SendKeyReport(byteArrayOf(mod, KeyByte))
+            }
+        } else {
+            val code = usageStr.toInt().toByte()
+            synchronized(HidUtils::class.java) {
+                KeyByte = code
+                SendKeyReport(byteArrayOf(ModifierByte, KeyByte))
             }
         }
     }
 
-    fun KbdKeyUp(usageStr: String) {
+    /**
+     * 松开指定键，直接发送报文 0 即可代表停止发送报文，即调用 [stopKey]
+     * 但是这里需要检测松开的是否为修饰键，以实现组合键功能
+     */
+    fun keyUp(usageStr: String) {
         var usageStr = usageStr
         if (!TextUtils.isEmpty(usageStr)) {
             if (usageStr.startsWith("M")) {
@@ -331,6 +339,13 @@ object HidUtils {
                 }
             }
         }
+    }
+
+    /**
+     * 表示停止发送报文，等同于keyup
+     */
+    fun stopKey() {
+        SendKeyReport(byteArrayOf(0, 0))
     }
 
     fun SendKeyReport(reportData: ByteArray) {
