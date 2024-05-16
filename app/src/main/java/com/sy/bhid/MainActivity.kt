@@ -38,127 +38,153 @@ import com.sy.bhid.utils.ToastUtils
 import com.sy.bhid.utils.Utils
 
 
-class MainActivity : ComponentActivity() {
-    private var pairedDevices by mutableStateOf<List<BluetoothDevice>>(listOf())
-    private var connectedDevice by mutableStateOf<BluetoothDevice?>(null)
+class MainActivity : ComponentActivity(), BDeviceUtils.HidEventListener {
+	private var pairedDevices by mutableStateOf<List<BluetoothDevice>>(listOf())
+	private var connectedDevice by mutableStateOf<BluetoothDevice?>(null)
 
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        AppUtils.init(this)
-        ScreenUtils.setFullScreen(this)
-        setContent {
-            BHidkeyboardTheme {
-                Surface(Modifier.fillMaxSize(1f)) {
-                    Main(pairedDevices) {
-                        if (it == BDeviceUtils.BtDevice) {
-                            this.sendKey(arrayOf("ESC", "2", "0", "2", "3", "1", "0", "1", "5"))
-                        } else {
-                            val isConnected = BDeviceUtils.connect(it.address)
-                            if (isConnected) {
-                                ToastUtils.showShortSafe("连接成功")
-                                connectedDevice = it
-                            } else ToastUtils.showShortSafe("连接失败")
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		AppUtils.init(this)
+		ScreenUtils.setFullScreen(this)
+		setContent {
+			BHidkeyboardTheme {
+				Surface(Modifier.fillMaxSize(1f)) {
+					Main(pairedDevices) {
+						if (it == BDeviceUtils.BtDevice) {
+							this.sendKey(arrayOf("ESC", "2", "0", "2", "3", "1", "0", "1", "5"))
+						} else {
+							val isRegistered = BDeviceUtils.connect(it.address)
+							if (!isRegistered) {
+								ToastUtils.showShortSafe("未成功注册为 HID 设备")
+							}
+						}
+					}
+				}
+			}
+		}
+		Utils.showLog(isSupportBluetoothHid().toString())
+	}
 
-                        }
-                    }
-                }
-            }
-        }
-        Utils.showLog(isSupportBluetoothHid().toString())
-    }
+	@RequiresApi(Build.VERSION_CODES.S)
+	private fun init() {
+		registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+			if (it.all { permission -> permission.value }) {
+				BDeviceUtils.RegistApp(this)
+			} else {
+				ToastUtils.showLongSafe("请授予所有权限")
+			}
+		}.launch(
+			arrayOf(
+				Manifest.permission.BLUETOOTH_SCAN,
+				Manifest.permission.BLUETOOTH_CONNECT,
+				Manifest.permission.BLUETOOTH_ADVERTISE,
+			)
+		)
+	}
 
-    @RequiresApi(Build.VERSION_CODES.S)
-    private fun init() {
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-            if (it.all { permission -> permission.value }) {
-                BDeviceUtils.RegistApp(object : BDeviceUtils.HidServiceEventListener {
-                    override fun HidServiceConnected() {
-                        pairedDevices = (BDeviceUtils.getPairedDevices()?.toList() ?: listOf())
-//                        BHidUtils.connect(BHidUtils.SelectedDeviceMac)
-                    }
-                })
-            } else {
-                ToastUtils.showLongSafe("请授予所有权限")
-            }
-        }.launch(
-            arrayOf(
-                Manifest.permission.BLUETOOTH_SCAN,
-                Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.BLUETOOTH_ADVERTISE,
-            )
-        )
-    }
+	@RequiresApi(Build.VERSION_CODES.S)
+	@SuppressLint("MissingPermission")
+	override fun onStart() {
+		super.onStart()
+		// 程序进入后台时，HID 会自动取消注册，所以无论是初始化还是从后台进入前台，都要重新注册
+		init()
+		// 用于程序从后台进入前台时的触发
+		BDeviceUtils.reConnect(this)
+	}
 
-    @RequiresApi(Build.VERSION_CODES.S)
-    @SuppressLint("MissingPermission")
-    override fun onStart() {
-        super.onStart()
-        // 程序进入后台时，HID 会自动取消注册，所以无论是初始化还是从后台进入前台，都要重新注册
-        init()
-        // 用于程序从后台进入前台时的触发
-        BDeviceUtils.reConnect(this)
-    }
+	override fun onStop() {
+		super.onStop()
+		// 同步连接设备对象
+		connectedDevice = BDeviceUtils.BtDevice
+	}
 
-    override fun onStop() {
-        super.onStop()
-        // 同步连接设备对象
-        connectedDevice = BDeviceUtils.BtDevice
-    }
+	override fun onDestroy() {
+		super.onDestroy()
+		// 关闭 handler，线程执行器，取消注册HID
+		HidUtils.exit()
+	}
 
-    override fun onDestroy() {
-        super.onDestroy()
-        // 关闭 handler，线程执行器，取消注册HID
-        HidUtils.exit()
-    }
 
-    private fun sendKey(msg: Array<String>) {
-        msg.forEach {
-            HidUtils.keyDown(it)
-            HidUtils.stopKey()
-        }
-    }
+	/**
+	 * HID 服务连接
+	 */
+	override fun ServiceConnected() {
+		super.ServiceConnected()
+		pairedDevices = (BDeviceUtils.getPairedDevices()?.toList() ?: listOf())
+		// BHidUtils.connect(BHidUtils.SelectedDeviceMac)
+	}
 
-    private fun isSupportBluetoothHid(): Boolean {
-        val intent = Intent("android.bluetooth.IBluetoothHidDevice")
-        val results: List<ResolveInfo> = this.packageManager.queryIntentServices(intent, 0) ?: return false
-        var comp: ComponentName? = null
-        for (i in results.indices) {
-            val ri = results[i]
-            if (ri.serviceInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM == 0) {
-                continue
-            }
-            val foundComp = ComponentName(
-                ri.serviceInfo.applicationInfo.packageName,
-                ri.serviceInfo.name
-            )
-            check(comp == null) {
-                ("Multiple system services handle " + this
-                        + ": " + comp + ", " + foundComp)
-            }
-            comp = foundComp
-        }
-        return comp != null
-    }
+	/**
+	 * HID 连接到蓝牙设备
+	 */
+	override fun DeviceConnected(device: BluetoothDevice) {
+		super.DeviceConnected(device)
+		connectedDevice = device
+	}
 
-    @SuppressLint("MissingPermission")
-    @Composable
-    fun Main(pairedDevices: List<BluetoothDevice>, click: (item: BluetoothDevice) -> Unit) {
-        val lazylistState = rememberLazyListState()
-        LazyColumn(verticalArrangement = Arrangement.Center, contentPadding = PaddingValues(1.dp), state = lazylistState) {
-            items(pairedDevices) {
-                Button(onClick = { click(it) }) {
-                    Column {
-                        if (it == connectedDevice) {
-                            Text(text = "已连接")
-                        }
-                        Text(text = it.name)
-                        Text(text = it.address)
-                    }
-                }
-            }
-        }
+	/**
+	 * HID 连接蓝牙设备连接中
+	 */
+	override fun DeviceConnecting(device: BluetoothDevice) {
+		super.DeviceConnecting(device)
+	}
 
-    }
+	/**
+	 * HID 断开连接蓝牙设备
+	 */
+	override fun DeviceDisconnected(device: BluetoothDevice) {
+		super.DeviceDisconnected(device)
+		connectedDevice = null
+	}
+
+	private fun sendKey(msg: Array<String>) {
+		msg.forEach {
+			HidUtils.keyDown(it)
+			HidUtils.stopKey()
+		}
+	}
+
+	private fun isSupportBluetoothHid(): Boolean {
+		val intent = Intent("android.bluetooth.IBluetoothHidDevice")
+		val results: List<ResolveInfo> = this.packageManager.queryIntentServices(intent, 0) ?: return false
+		var comp: ComponentName? = null
+		for (i in results.indices) {
+			val ri = results[i]
+			if (ri.serviceInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM == 0) {
+				continue
+			}
+			val foundComp = ComponentName(
+				ri.serviceInfo.applicationInfo.packageName,
+				ri.serviceInfo.name
+			)
+			check(comp == null) {
+				("Multiple system services handle " + this
+						+ ": " + comp + ", " + foundComp)
+			}
+			comp = foundComp
+		}
+		return comp != null
+	}
+
+	@SuppressLint("MissingPermission")
+	@Composable
+	fun Main(pairedDevices: List<BluetoothDevice>, click: (item: BluetoothDevice) -> Unit) {
+		val lazylistState = rememberLazyListState()
+		LazyColumn(verticalArrangement = Arrangement.Center, contentPadding = PaddingValues(1.dp), state = lazylistState) {
+			items(pairedDevices) {
+				Button(onClick = { click(it) }) {
+					Column {
+						if (it == connectedDevice) {
+							Text(text = "已连接")
+						}
+						Text(text = it.name)
+						Text(text = it.address)
+					}
+				}
+			}
+		}
+
+	}
 }
 
