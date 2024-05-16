@@ -13,6 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +30,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sy.bhid.ui.theme.BHidkeyboardTheme
 import com.sy.bhid.utils.AppUtils
@@ -172,19 +176,42 @@ class MainActivity : ComponentActivity(), BDeviceUtils.HidEventListener {
 	fun Main(pairedDevices: List<BluetoothDevice>, click: (item: BluetoothDevice) -> Unit) {
 		val lazylistState = rememberLazyListState()
 		LazyColumn(verticalArrangement = Arrangement.Center, contentPadding = PaddingValues(1.dp), state = lazylistState) {
-			items(pairedDevices) {
-				Button(onClick = { click(it) }) {
+			items(pairedDevices) { device ->
+				Button(modifier = Modifier.pointerInput(Unit) {
+					detectTapGestures(
+						onTap = {
+							Utils.showLog("点击事件")
+							click(device)
+						}, onDoubleTap = {
+							Utils.showLog("双击事件")
+						}, onPress = {
+							Utils.showLog("触摸事件")
+						}, onLongPress = {
+							Utils.showLog("长按事件")
+						}
+					)
+				}, onClick = { }) {
 					Column {
-						if (it == connectedDevice) {
+						if (device == connectedDevice) {
 							Text(text = "已连接")
 						}
-						Text(text = it.name)
-						Text(text = it.address)
+						Text(text = device.name)
+						Text(text = device.address)
 					}
 				}
 			}
 		}
+	}
+
+	@Composable
+	fun ShowInput() {
+
+	}
+
+	@OptIn(ExperimentalMaterial3Api::class)
+	@Preview
+	@Composable
+	private fun Preview() {
 
 	}
 }
-

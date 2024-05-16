@@ -173,7 +173,6 @@ object BDeviceUtils {
 					IsConnected(false)
 					BtDevice = null
 					listener?.DeviceDisconnected(device)
-					// EventBus.getDefault().post(HidEvent(HidEvent.tcpType.onDisConnected))
 				}
 
 				BluetoothProfile.STATE_CONNECTED -> {
@@ -181,14 +180,12 @@ object BDeviceUtils {
 					IsConnected(true)
 					ToastUtils.showShortSafe("连接成功")
 					listener?.DeviceConnected(device)
-					// EventBus.getDefault().post(HidEvent(HidEvent.tcpType.onConnected))
 				}
 
 				BluetoothProfile.STATE_CONNECTING -> {
 					Utils.showLog("CONNECTING...")
 					ToastUtils.showShortSafe("连接中...")
 					listener?.DeviceConnecting(device)
-					//  EventBus.getDefault().post(HidEvent(HidEvent.tcpType.onConnecting))
 				}
 			}
 		}
