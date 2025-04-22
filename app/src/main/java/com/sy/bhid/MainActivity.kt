@@ -20,13 +20,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -39,7 +44,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
 import com.sy.bhid.ui.theme.BHidkeyboardTheme
 import com.sy.bhid.utils.AppUtils
@@ -75,7 +82,12 @@ class MainActivity : ComponentActivity(), BDeviceUtils.HidEventListener {
                                 ToastUtils.showShortSafe("未成功注册为 HID 设备")
                             }
                         }
-                    }, savePwd = { address, pwd -> this.setBDevicePwd(address, pwd.trim()) })
+                    }, savePwd = { address, pwd ->
+                        run {
+                            Utils.showLog(address)
+                            this.setBDevicePwd(address, pwd.trim())
+                        }
+                    })
                 }
             }
         }
@@ -128,6 +140,14 @@ class MainActivity : ComponentActivity(), BDeviceUtils.HidEventListener {
     override fun ServiceConnected() {
         super.ServiceConnected()
         pairedDevices = (BDeviceUtils.getPairedDevices()?.toList() ?: listOf())
+        // 删除曾经配对过但被删除的设备配置
+        val keys = sharedPreferences.all.keys
+        val invalidKeys = keys - pairedDevices.map { it.address }.toSet()  // 差集操作
+        invalidKeys.forEach {
+            sharedPreferences.edit {
+                this.remove(it)
+            }
+        }
     }
 
     /**
@@ -206,32 +226,41 @@ class MainActivity : ComponentActivity(), BDeviceUtils.HidEventListener {
         val lazylistState = rememberLazyListState()
         Box {
             Box {
-                LazyColumn(verticalArrangement = Arrangement.Center, contentPadding = PaddingValues(1.dp), state = lazylistState) {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(15.dp),
+                    state = lazylistState,
+                ) {
                     items(pairedDevices) { device ->
-                        Box(modifier = Modifier
-                            .background(Color.Blue, RoundedCornerShape(14.dp))
-                            .padding(16.dp)
-                            .pointerInput(Unit) {
-                                detectTapGestures(
-                                    onTap = {
-                                        Utils.showLog("点击事件")
-                                        click(device)
-                                    }, onDoubleTap = {
-                                        Utils.showLog("双击事件")
-                                    }, onPress = {
-                                        Utils.showLog("触摸事件")
-                                    }, onLongPress = {
-                                        Utils.showLog("长按事件")
-                                        deviceAddress = device.address
-                                    }
-                                )
-                            }) {
+                        Box(
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.onBackground, RoundedCornerShape(5.dp))
+                                .padding(10.dp)
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onTap = {
+                                            Utils.showLog("点击事件")
+                                            click(device)
+                                        }, onDoubleTap = {
+                                            Utils.showLog("双击事件")
+                                        }, onPress = {
+                                            Utils.showLog("触摸事件")
+                                        }, onLongPress = {
+                                            Utils.showLog("长按事件")
+                                            deviceAddress = device.address
+                                        }
+                                    )
+                                }) {
                             Column {
-                                if (device == connectedDevice) {
-                                    Text(text = "已连接")
+                                Row {
+                                    Text(text = device.name, color = MaterialTheme.colorScheme.primary)
+                                    Spacer(Modifier.width(2.dp))
+                                    if (device == connectedDevice) {
+                                        Text(text = "已连接", color = Color.Green)
+                                    }
                                 }
-                                Text(text = device.name)
-                                Text(text = device.address)
+                                Spacer(Modifier.height(2.dp))
+                                Text(text = device.address, color = Color.Gray, fontSize = 12.sp)
                             }
                         }
                     }
@@ -243,6 +272,7 @@ class MainActivity : ComponentActivity(), BDeviceUtils.HidEventListener {
                     deviceAddress = ""
                 }, onConfirm = {
                     Utils.showLog("confirm")
+                    Utils.showLog("input:" + it + " deviceAddress:" + deviceAddress)
                     savePwd(deviceAddress, it)
                 }, currPwd = this@MainActivity.getBDevicePwd(deviceAddress) as String)
         }
