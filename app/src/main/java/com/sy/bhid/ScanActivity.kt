@@ -1,31 +1,5 @@
 package com.sy.bhid
 
-import android.R
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.os.Bundle
-import android.text.TextUtils
-import android.util.Log
-import android.view.View
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.sy.bhid.ui.theme.BHidkeyboardTheme
-import java.util.Arrays
-import java.util.Collections
-
 
 //class ScanActivity : ComponentActivity() {
 //

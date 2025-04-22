@@ -1,6 +1,5 @@
 package com.sy.bhid.bk
 
-import com.sy.bhid.utils.HidUtils
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
@@ -10,6 +9,7 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.util.Log
+import com.sy.bhid.utils.HidUtils
 import com.sy.bhid.utils.Utils
 import java.util.concurrent.Executors
 

@@ -1,7 +1,5 @@
 package com.sy.bhid.data
 
-import android.R
-
 
 object KeyMap {
     // https://zhuanlan.zhihu.com/p/409558697

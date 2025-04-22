@@ -8,7 +8,6 @@ import android.os.Looper
 import android.os.Message
 import android.text.TextUtils
 import android.util.Log
-import com.sy.bhid.bk.BluetoothKeyboard
 import com.sy.bhid.data.HidReport
 import com.sy.bhid.data.KeyMap
 import java.util.Locale
